@@ -1,87 +1,110 @@
+import sun.nio.ch.Net;
+
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class Path {
-    List<String> Directions;
-    Path branch1 = null;
-    Path branch2 = null;
+class Path {
+    private List<String> Directions;
+    private Path ParentPath = null;
+    private ArrayList<Path> Branches = new ArrayList<>();
+    private Path NextPath = null;
+    private Set<Room> ProcessedRooms = new HashSet<>();
 
-    public void executeRoom(Room r) {
-        for (String direction : Directions) {
-            r = r.MakeRoom(direction);
-        }
-        if (branch1 != null) {
-            branch1.executeRoom(r);
-        }
-        if (branch2 != null) {
-            branch2.executeRoom(r);
-        }
-    }
+    Path(List<String> rawInput, Path parentPath) {
+        ParentPath = parentPath;
+        //Set the front part as directions
+        //Set the inner parts as the inner branches
+        //Set the ending part as the outer path
 
-    public Path(List<String> s) {
-        int currentIndex = 0;
-        //Add the first parts to the directions
-        currentIndex = s.indexOf("(");
-        if (currentIndex == -1) {
-            Directions = s;
+        if (rawInput.size() == 0) {
+            Directions = new ArrayList<>();
             return;
         }
-        Directions = s.subList(0, currentIndex);
-        //Take everything inside the parenthesis and separate it
-        int parenthesisCount = 1;
-        currentIndex++;
-        boolean foundPipe = false;
-        int branch1Start = currentIndex;
-        int branch1End = currentIndex;
-        int branch2Start = currentIndex;
-        int branch2End = currentIndex;
-        List<String> branch1List = null;
-        List<String> branch2List = null;
-        for (; currentIndex < s.size(); currentIndex++) {
-            String character = s.get(currentIndex);
+
+        int directionEnd = 0;
+        int currentBranchStart = 0;
+        int currentBranchEnd = 0;
+        int afterPathStart = 0;
+        int parenthesisCount = 0;
+        for (int currentIndex = 0; currentIndex < rawInput.size(); currentIndex++) {
+            String character = rawInput.get(currentIndex);
             if (character.equals("(")) {
                 parenthesisCount++;
+                if (parenthesisCount == 1) {
+                    directionEnd = currentIndex;
+                    currentBranchStart = currentIndex + 1;
+                }
             } else if (character.equals(")")) {
                 parenthesisCount--;
                 if (parenthesisCount == 0) {
-                    currentIndex++;
+                    currentBranchEnd = currentIndex;
+                    Branches.add( new Path(rawInput.subList(currentBranchStart, currentBranchEnd), this));
+                    afterPathStart = currentIndex + 1;
                     break;
                 }
             } else if (character.equals("|") && parenthesisCount == 1) {
-                foundPipe = true;
-                branch2Start = currentIndex + 1;
-                continue;
-            }
-            if (parenthesisCount > 0) {
-                if (!foundPipe) {
-                    branch1End = currentIndex;
-                } else {
-                    branch2End = currentIndex;
-                }
+                currentBranchEnd = currentIndex;
+                Branches.add( new Path(rawInput.subList(currentBranchStart, currentBranchEnd), this));
+                currentBranchStart = currentIndex + 1;
             }
         }
-        branch1List = s.subList(branch1Start, branch1End+1);
-        if (branch2Start <= branch2End) {
-            branch2List = s.subList(branch2Start, branch2End+1);
+
+        if (directionEnd == 0) {
+            Directions = new ArrayList<>();
         }
-        if (currentIndex < s.size()-1) {
-            List<String> listToAdd = s.subList(currentIndex, s.size());
-            ArrayList<String> newBranch1 = new ArrayList<>();
-            newBranch1.addAll(branch1List);
-            newBranch1.addAll(listToAdd);
-            branch1List = newBranch1;
-            ArrayList<String> newBranch2 = new ArrayList<>();
-            if (branch2List != null) {
-                newBranch2.addAll(branch2List);
+        if (Branches.size() == 0) {
+            Directions = rawInput;
+            return;
+        }
+        Directions = rawInput.subList(0, directionEnd);
+        if (afterPathStart < rawInput.size()) {
+            NextPath = new Path(rawInput.subList(afterPathStart, rawInput.size()), parentPath);
+        }
+    }
+
+    int GetNumberOfPaths() {
+        int count = 1;
+        for (Path b : Branches) {
+            count += b.GetNumberOfPaths();
+        }
+        if (NextPath != null) {
+            count += NextPath.GetNumberOfPaths();
+        }
+        return count;
+    }
+
+    void executeRoom(Room r, AtomicLong completedPathCount) {
+        if (ProcessedRooms.contains(r)) {
+            return;
+        }
+        ProcessedRooms.add(r);
+        //Run all directions
+        for (String direction : Directions) {
+            r = r.MakeRoom(direction);
+        }
+        if (Branches.size() == 0) {
+            if (ParentPath != null) {
+                ParentPath.finishRoom(r, completedPathCount);
+            } else {
+                this.finishRoom(r, completedPathCount);
             }
-            newBranch2.addAll(listToAdd);
-            branch2List = newBranch2;
+        } else {
+            for (Path b : Branches) {
+                b.executeRoom(r, completedPathCount);
+            }
         }
-        if (branch1List.size() > 0) {
-            branch1 = new Path(branch1List);
-        }
-        if (branch2List != null && branch2List.size() > 0) {
-            branch2 = new Path(branch2List);
+    }
+    private void finishRoom(Room r, AtomicLong completedPathCount) {
+        if (NextPath != null) {
+            NextPath.executeRoom(r, completedPathCount);
+        } else if (ParentPath != null) {
+            ParentPath.finishRoom(r, completedPathCount);
+        } else {
+            completedPathCount.addAndGet(1);
+            //System.out.println("Finished paths: " + completedPathCount.get());
         }
     }
 }

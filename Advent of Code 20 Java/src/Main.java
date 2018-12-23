@@ -1,7 +1,6 @@
-import java.lang.reflect.Array;
-import java.time.Duration;
-import java.time.Instant;
+import java.text.NumberFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -19,19 +18,32 @@ public class Main {
         }
 
         //Parse the input into branches
-        Path path = new Path(inputs);
+        //Path path = new Path(inputs);
+        Path path = new Path(inputs, null);
+
+        AtomicLong completedPathCount = new AtomicLong(0);
 
         System.out.println("Finished parsing path");
+        System.out.println("Number of paths: " + NumberFormat.getInstance().format(path.GetNumberOfPaths()));
 
         Room startingRoom = new Room();
-        //Execute the input into connected nodes
-        path.executeRoom(startingRoom);
+        path.executeRoom(startingRoom, completedPathCount);
 
-        System.out.println("Finished creating rooms");
+        System.out.println("End Finished paths: " + completedPathCount.get());
+
+        System.out.println("Finished building rooms");
+
+        //Room startingRoom = new Room();
+        //Execute the input into connected nodes
+        //path.executeRoom(startingRoom);
+
+        //System.out.println("Finished creating rooms");
 
         //Flood fill to find the furthest area
         int value = startingRoom.GetLargestRoomValue(new HashSet<>());
         System.out.println("Furthest room: " + value);
+
+        System.out.println("Number of rooms >= 1000: " + startingRoom.GetNumberOfRooms(new HashSet<>(), 0, 1000));
     }
 
     public static void part2() {
