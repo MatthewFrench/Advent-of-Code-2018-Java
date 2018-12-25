@@ -50,6 +50,20 @@ public class Main {
             }
         }
         System.out.println("Risk level: " + dangerLevel);
+
+
+        /*
+        Find the fastest path from M(0,0) to the Target
+
+        Option 1:
+        Grow the fastest path from M to each tile until we eventually solve down to T
+        Throw away any paths that are slower into a tile
+
+        Option 2:
+        Pick the first path manually, straight down from M then right to T. Mark that as the minutes required to travel
+        Queue all future paths in an array to sift through
+        Any path that get
+         */
     }
 
     public static void printGrid(int[][] grid, int width, int height) {
