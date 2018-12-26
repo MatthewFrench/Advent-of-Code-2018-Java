@@ -17,12 +17,14 @@ public class Main {
         int depth = Input.getDepth();
         int targetX = Input.getTargetX();
         int targetY = Input.getTargetY();
+        int width = targetX + 20;
+        int height = targetY + 20;
 
-        long[][] geologicalIndexGrid = new long[targetX + 1][targetY + 1];
-        long[][] erosionLevelGrid = new long[targetX + 1][targetY + 1];
-        int[][] grid = new int[targetX + 1][targetY + 1];
-        for (int x = 0; x < targetX + 1; x++) {
-            for (int y = 0; y < targetY + 1; y++) {
+        long[][] geologicalIndexGrid = new long[width][height];
+        long[][] erosionLevelGrid = new long[width][height];
+        int[][] grid = new int[width][height];
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 if ((x == 0 && y == 0) || (x == targetX && y == targetY)) {
                     geologicalIndexGrid[x][y] = 0;
                 } else {
@@ -41,7 +43,7 @@ public class Main {
             }
         }
 
-        printGrid(grid, targetX + 1, targetY + 1);
+        printGrid(grid, width, height);
 
         long dangerLevel = 0;
         for (int x = 0; x < targetX+1; x++) {
@@ -64,6 +66,32 @@ public class Main {
         Queue all future paths in an array to sift through
         Any path that get
          */
+        ExplorePath explorePath = new ExplorePath();
+        explorePath.X = 0;
+        explorePath.Y = 0;
+        explorePath.Value = 0;
+        explorePath.Tool = ExplorePath.TOOL_TORCH;
+
+        int smallestPathValue = 0;
+        int currentX = 0;
+        int currentY = 0;
+        int currentTool = ExplorePath.TOOL_TORCH;
+        //Calculate a baseline path going down and then right
+        for (int y = 0; y < targetY; y++) {
+            for (int x = 0; x < targetX; x++) {
+
+            }
+        }
+
+        //Loop through every possible path until there are no more possible paths
+        //As soon as we have a successful path, use that as baseline to cancel other paths
+        //Use a linked list
+        LinkedList<ExplorePath> pathsToExplore = new LinkedList<>();
+        pathsToExplore.add(explorePath);
+        while (pathsToExplore.size() > 0) {
+
+        }
+
     }
 
     public static void printGrid(int[][] grid, int width, int height) {
