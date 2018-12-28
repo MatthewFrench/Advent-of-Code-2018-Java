@@ -67,78 +67,53 @@ public class Main {
 
         int instructionPointer = Integer.parseInt(split[0].split(" ")[1]);
 
-        boolean hasSuccessfulHalt = false;
-        int minValue = 0;
-        long maxLoops = 0;
+        LinkedHashSet<Integer> uniqueValues = new LinkedHashSet<>();
 
-        for (int i = 10721810; i < 10721810+1; i++) {
-            Sample sample = new Sample();
-            sample.BeforeRegisterStates[instructionPointer] = 0;
-            sample.BeforeRegisterStates[0] = i;
-            sample.AfterRegisterStates[0] = i;
+        final int startNumber = 0;
+        Sample sample = new Sample();
+        sample.BeforeRegisterStates[instructionPointer] = 0;
+        sample.BeforeRegisterStates[0] = startNumber;
+        sample.AfterRegisterStates[0] = startNumber;
 
-            boolean executing = true;
-            long loops = 0;
-            Instant start = Instant.now();
-            while (executing) {
-                InstructionInput instructionInfo = instructionInput[sample.BeforeRegisterStates[instructionPointer]];
-                loops++;
+        int[] beforeRegisterStates = sample.BeforeRegisterStates;
+        int[] afterRegisterStates = sample.AfterRegisterStates;
 
-                Instruction instruction = instructionInfo.Instruction;
-                instruction.Run(sample, instructionInfo.Value1, instructionInfo.Value2, instructionInfo.Value3);
+        long loops = 0;
+        while (true) {
+            final int instructionIndex = beforeRegisterStates[instructionPointer];
+            final InstructionInput instructionInfo = instructionInput[instructionIndex];
+            loops++;
 
+            instructionInfo.Instruction.Run(beforeRegisterStates, afterRegisterStates, instructionInfo.Value1, instructionInfo.Value2, instructionInfo.Value3);
 
-                if (sample.BeforeRegisterStates[instructionPointer] == 28) {
-                    if (sample.AfterRegisterStates[5] == 1) {
-                        if (!hasSuccessfulHalt) {
-                            System.out.println(i);
-                            hasSuccessfulHalt = true;
-                            minValue = i;
-                            maxLoops = loops;
-                        } else {
-                            if (loops > maxLoops) {
-                                System.out.println(i);
-                                minValue = i;
-                                maxLoops = loops;
-                            } else {
-                                System.out.println("Threw away minimum value of : " + i);
-                            }
-                        }
-                    }
+            if (instructionIndex == 28) {
+                final int value = afterRegisterStates[3];
+                if (uniqueValues.contains(value)) {
+                    System.out.println("Contains duplicate value: " + value);
                     break;
-                }
-
-                sample.AfterRegisterStates[instructionPointer] += 1;
-                sample.CopyAfterToBefore();
-                if (sample.BeforeRegisterStates[instructionPointer] > split.length-2) {
-                    executing = false;
-                    if (!hasSuccessfulHalt) {
-                        hasSuccessfulHalt = true;
-                        minValue = i;
-                        maxLoops = loops;
-                    } else {
-                        if (loops > maxLoops) {
-                            minValue = i;
-                            maxLoops = loops;
-                        } else {
-                            System.out.println("Threw away minimum value of : " + i);
-                        }
-                    }
+                } else {
+                    uniqueValues.add(value);
                 }
             }
+
+            afterRegisterStates[instructionPointer] += 1;
+            sample.CopyAfterToBefore();
         }
 
-        System.out.println("Minimum value: " + minValue + " with loops: " + maxLoops);
+        Integer[] valueArray = uniqueValues.toArray(new Integer[0]);
+        System.out.println("Total loops: " + loops);
+        System.out.println("Minimum value: " + valueArray[0]);
+        System.out.println("Maximum value: " + valueArray[valueArray.length-1]);
     }
 
     public static void printOutput(long loop, Sample s) {
         System.out.println(loop + " [" +
-                s.BeforeRegisterStates[0] +", " +
-                s.BeforeRegisterStates[1] +", " +
-                s.BeforeRegisterStates[2] +", " +
-                s.BeforeRegisterStates[3] +", " +
-                s.BeforeRegisterStates[4] +", " +
-                s.BeforeRegisterStates[5] +"]");
+                s.BeforeRegisterStates[0] + ", " +
+                s.BeforeRegisterStates[1] + ", " +
+                s.BeforeRegisterStates[2] + ", " +
+                s.BeforeRegisterStates[3] + ", " +
+                s.BeforeRegisterStates[4] + ", " +
+                s.BeforeRegisterStates[5] + "]");
     }
 
     public static void part2() {

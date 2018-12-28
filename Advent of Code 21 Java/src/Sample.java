@@ -13,11 +13,14 @@ public class Sample {
     }
 
     public void CopyAfterToBefore() {
+        System.arraycopy( AfterRegisterStates, 0, BeforeRegisterStates, 0, 6 );
+        /*
         BeforeRegisterStates[0] = AfterRegisterStates[0];
         BeforeRegisterStates[1] = AfterRegisterStates[1];
         BeforeRegisterStates[2] = AfterRegisterStates[2];
         BeforeRegisterStates[3] = AfterRegisterStates[3];
         BeforeRegisterStates[4] = AfterRegisterStates[4];
         BeforeRegisterStates[5] = AfterRegisterStates[5];
+        */
     }
 }

@@ -178,7 +178,7 @@ In narrow regions, you can use the torch or neither tool. You cannot use the cli
         Guessing now
         1042 - Too low
         1044 - Not Correct
-        
+
         Correct answer: 1043
          */
     }
