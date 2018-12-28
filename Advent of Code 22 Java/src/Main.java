@@ -17,8 +17,8 @@ public class Main {
         int depth = Input.getDepth();
         int targetX = Input.getTargetX();
         int targetY = Input.getTargetY();
-        int width = targetX + 20;
-        int height = targetY + 20;
+        int width = targetX + 30;
+        int height = targetY + 30;
 
         long[][] geologicalIndexGrid = new long[width][height];
         long[][] erosionLevelGrid = new long[width][height];
@@ -55,17 +55,13 @@ public class Main {
 
 
         /*
-        Find the fastest path from M(0,0) to the Target
-
-        Option 1:
-        Grow the fastest path from M to each tile until we eventually solve down to T
-        Throw away any paths that are slower into a tile
-
-        Option 2:
-        Pick the first path manually, straight down from M then right to T. Mark that as the minutes required to travel
-        Queue all future paths in an array to sift through
-        Any path that get
+        This might work
+        Store all smallest values on each X/Y with the tool.
+        Any new paths on that position with the same tool that are greater can be discarded
          */
+
+        HashMap<String, Integer> exploredPathSmallestPaths = new HashMap<>();
+
         ExplorePath explorePath = new ExplorePath();
         explorePath.X = 0;
         explorePath.Y = 0;
@@ -73,6 +69,7 @@ public class Main {
         explorePath.Tool = ExplorePath.TOOL_TORCH;
 
         int smallestPathValue = 0;
+        /*
         int currentX = 0;
         int currentY = 0;
         int currentTool = ExplorePath.TOOL_TORCH;
@@ -91,6 +88,7 @@ public class Main {
                 currentTool = ExplorePath.TOOL_TORCH;
                 smallestPathValue += 7;
             }
+            exploredPathSmallestPaths.put(ExplorePath.GetHash(currentX, currentY, currentTool), smallestPathValue);
         }
         for (int x = 0; x < targetX; x++) {
             int newTerrain = grid[x + 1][currentY];
@@ -106,13 +104,15 @@ public class Main {
                 currentTool = ExplorePath.TOOL_TORCH;
                 smallestPathValue += 7;
             }
+            exploredPathSmallestPaths.put(ExplorePath.GetHash(currentX, currentY, currentTool), smallestPathValue);
         }
         if (currentTool != ExplorePath.TOOL_TORCH) {
             currentTool = ExplorePath.TOOL_TORCH;
             smallestPathValue += 7;
         }
         System.out.println("Default first path value: " + smallestPathValue);
-
+*/
+        smallestPathValue = 1045;
 
 
         /*
@@ -125,9 +125,11 @@ In narrow regions, you can use the torch or neither tool. You cannot use the cli
         //As soon as we have a successful path, use that as baseline to cancel other paths
         //Use a linked list
 
+        long completedPaths = 0;
         final LinkedList<ExplorePath> pathsToExplore = new LinkedList<>();
         pathsToExplore.add(explorePath);
         while (pathsToExplore.size() > 0) {
+            completedPaths++;
             ExplorePath path = pathsToExplore.pollFirst();
             if (path.X == targetX && path.Y == targetY) {
                 if (path.Tool != ExplorePath.TOOL_TORCH) {
@@ -136,11 +138,19 @@ In narrow regions, you can use the torch or neither tool. You cannot use the cli
                 }
                 if (path.Value < smallestPathValue) {
                     smallestPathValue = path.Value;
+                    System.out.println("Smallest value: " + smallestPathValue);
+                    System.out.println("Completed paths: " + completedPaths);
                 }
-                System.out.println("Smallest value: " + smallestPathValue);
-                System.out.println("Got to target: " + path.Value);
                 continue;
             }
+            String hash = ExplorePath.GetHash(path.X, path.Y, path.Tool);
+            if (exploredPathSmallestPaths.containsKey(hash)) {
+                if (exploredPathSmallestPaths.get(hash) <= path.Value) {
+                    continue;
+                }
+            }
+            exploredPathSmallestPaths.put(hash, path.Value);
+
             final ArrayList<ExplorePath> pathsLeft = path.goToPath(path.X - 1, path.Y, grid, width, height, smallestPathValue);
             final ArrayList<ExplorePath> pathsRight = path.goToPath(path.X + 1, path.Y, grid, width, height, smallestPathValue);
             final ArrayList<ExplorePath> pathsTop = path.goToPath(path.X, path.Y - 1, grid, width, height, smallestPathValue);
@@ -148,10 +158,10 @@ In narrow regions, you can use the torch or neither tool. You cannot use the cli
             for (ExplorePath path2 : pathsLeft) {
                 pathsToExplore.addFirst(path2);
             }
-            for (ExplorePath path2 : pathsRight) {
+            for (ExplorePath path2 : pathsTop) {
                 pathsToExplore.addFirst(path2);
             }
-            for (ExplorePath path2 : pathsTop) {
+            for (ExplorePath path2 : pathsRight) {
                 pathsToExplore.addFirst(path2);
             }
             for (ExplorePath path2 : pathsBottom) {
@@ -160,6 +170,17 @@ In narrow regions, you can use the torch or neither tool. You cannot use the cli
         }
         System.out.println("----------");
         System.out.println("Smallest value: " + smallestPathValue);
+
+        /*
+        There's a bug in the logic somewhere
+        First answer: 1045, increased width and height
+        Second answer: 1039, too low
+        Guessing now
+        1042 - Too low
+        1044 - Not Correct
+        
+        Correct answer: 1043
+         */
     }
 
     public static void printGrid(int[][] grid, int width, int height, int targetX, int targetY) {

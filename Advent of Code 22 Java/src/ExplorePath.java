@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class ExplorePath {
@@ -106,5 +107,9 @@ public class ExplorePath {
         }
 
         return paths;
+    }
+
+    static String GetHash(int x, int y, int tool) {
+         return x+","+y+","+tool;
     }
 }
