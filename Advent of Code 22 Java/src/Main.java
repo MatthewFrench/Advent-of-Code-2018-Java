@@ -43,7 +43,7 @@ public class Main {
             }
         }
 
-        printGrid(grid, width, height);
+        printGrid(grid, width, height, targetX, targetY);
 
         long dangerLevel = 0;
         for (int x = 0; x < targetX+1; x++) {
@@ -78,23 +78,91 @@ public class Main {
         int currentTool = ExplorePath.TOOL_TORCH;
         //Calculate a baseline path going down and then right
         for (int y = 0; y < targetY; y++) {
-            for (int x = 0; x < targetX; x++) {
-
+            int newTerrain = grid[currentX][y+1];
+            currentY = y + 1;
+            smallestPathValue += 1;
+            if (newTerrain == ROCKY && currentTool == ExplorePath.TOOL_NOTHING) {
+                currentTool = ExplorePath.TOOL_CLIMBING_GEAR;
+                smallestPathValue += 7;
+            } else if (newTerrain == WET && currentTool == ExplorePath.TOOL_TORCH) {
+                currentTool = ExplorePath.TOOL_CLIMBING_GEAR;
+                smallestPathValue += 7;
+            } else if (newTerrain == NARROW && currentTool == ExplorePath.TOOL_CLIMBING_GEAR) {
+                currentTool = ExplorePath.TOOL_TORCH;
+                smallestPathValue += 7;
             }
         }
+        for (int x = 0; x < targetX; x++) {
+            int newTerrain = grid[x + 1][currentY];
+            currentX = x + 1;
+            smallestPathValue += 1;
+            if (newTerrain == ROCKY && currentTool == ExplorePath.TOOL_NOTHING) {
+                currentTool = ExplorePath.TOOL_CLIMBING_GEAR;
+                smallestPathValue += 7;
+            } else if (newTerrain == WET && currentTool == ExplorePath.TOOL_TORCH) {
+                currentTool = ExplorePath.TOOL_CLIMBING_GEAR;
+                smallestPathValue += 7;
+            } else if (newTerrain == NARROW && currentTool == ExplorePath.TOOL_CLIMBING_GEAR) {
+                currentTool = ExplorePath.TOOL_TORCH;
+                smallestPathValue += 7;
+            }
+        }
+        if (currentTool != ExplorePath.TOOL_TORCH) {
+            currentTool = ExplorePath.TOOL_TORCH;
+            smallestPathValue += 7;
+        }
+        System.out.println("Default first path value: " + smallestPathValue);
+
+
+
+        /*
+        In rocky regions, you can use the climbing gear or the torch. You cannot use neither (you'll likely slip and fall).
+In wet regions, you can use the climbing gear or neither tool. You cannot use the torch (if it gets wet, you won't have a light source).
+In narrow regions, you can use the torch or neither tool. You cannot use the climbing gear (it's too bulky to fit).
+         */
 
         //Loop through every possible path until there are no more possible paths
         //As soon as we have a successful path, use that as baseline to cancel other paths
         //Use a linked list
-        LinkedList<ExplorePath> pathsToExplore = new LinkedList<>();
+
+        final LinkedList<ExplorePath> pathsToExplore = new LinkedList<>();
         pathsToExplore.add(explorePath);
         while (pathsToExplore.size() > 0) {
-
+            ExplorePath path = pathsToExplore.pollFirst();
+            if (path.X == targetX && path.Y == targetY) {
+                if (path.Tool != ExplorePath.TOOL_TORCH) {
+                    path.Tool = ExplorePath.TOOL_TORCH;
+                    path.Value += 7;
+                }
+                if (path.Value < smallestPathValue) {
+                    smallestPathValue = path.Value;
+                }
+                System.out.println("Smallest value: " + smallestPathValue);
+                System.out.println("Got to target: " + path.Value);
+                continue;
+            }
+            final ArrayList<ExplorePath> pathsLeft = path.goToPath(path.X - 1, path.Y, grid, width, height, smallestPathValue);
+            final ArrayList<ExplorePath> pathsRight = path.goToPath(path.X + 1, path.Y, grid, width, height, smallestPathValue);
+            final ArrayList<ExplorePath> pathsTop = path.goToPath(path.X, path.Y - 1, grid, width, height, smallestPathValue);
+            final ArrayList<ExplorePath> pathsBottom = path.goToPath(path.X, path.Y + 1, grid, width, height, smallestPathValue);
+            for (ExplorePath path2 : pathsLeft) {
+                pathsToExplore.addFirst(path2);
+            }
+            for (ExplorePath path2 : pathsRight) {
+                pathsToExplore.addFirst(path2);
+            }
+            for (ExplorePath path2 : pathsTop) {
+                pathsToExplore.addFirst(path2);
+            }
+            for (ExplorePath path2 : pathsBottom) {
+                pathsToExplore.addFirst(path2);
+            }
         }
-
+        System.out.println("----------");
+        System.out.println("Smallest value: " + smallestPathValue);
     }
 
-    public static void printGrid(int[][] grid, int width, int height) {
+    public static void printGrid(int[][] grid, int width, int height, int targetX, int targetY) {
         System.out.println("-------");
         for (int y = 0; y < height; y++) {
             String s = "";
@@ -102,7 +170,7 @@ public class Main {
                 int i = grid[x][y];
                 if (x == 0 && y == 0) {
                     s += "M";
-                } else if (x == width - 1 && y == height - 1) {
+                } else if (x == targetX && y == targetY) {
                     s += "T";
                 } else if (i == ROCKY) {
                     s += ".";
